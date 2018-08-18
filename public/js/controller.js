@@ -79,21 +79,15 @@ askeecsControllers.controller('QuestionAskCtrl', ['$scope', '$http', '$window', 
 			// Default to a non error state
 			var err = false;
 
-			if ($scope.question.markdown.length < 50)
+			if ($scope.question.markdown.length < 1)
 			{
-				$scope.error.markdown = "Your question must be 50 characters or more."
+				$scope.error.markdown = "Your question must be non-empty."
 				err = true;
 			}
 
 			if ($scope.question.title.length == 0)
 			{
 				$scope.error.title = "You must enter a title."
-				err = true;
-			}
-
-			if ($scope.question.tags.length == 0)
-			{
-				$scope.error.tags = "You must have at least one tag."
 				err = true;
 			}
 
@@ -158,9 +152,9 @@ askeecsControllers.controller('QuestionDetailCtrl', ['$scope', '$routeParams', '
 
 			var err = false;
 
-			if ( $scope.comment.Body.length < 15 )
+			if ( $scope.comment.Body.length < 1 )
 			{
-				$scope.errorComment = "Your comment must be at least 15 characters"
+				$scope.errorComment = "Your comment must be non-empty"
 				err = true;
 			}
 
@@ -182,9 +176,9 @@ askeecsControllers.controller('QuestionDetailCtrl', ['$scope', '$routeParams', '
 
 			var err = false;
 
-			if ($scope.response.Body.length < 50)
+			if ($scope.response.Body.length < 1)
 			{
-				$scope.errorMarkdown = "Your response must be 50 characters or more."
+				$scope.errorMarkdown = "Your response must be non-empty."
 				err = true;
 			}
 
