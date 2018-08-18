@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"github.com/martini-contrib/sessions"
 	"labix.org/v2/mgo/bson"
 	"encoding/json"

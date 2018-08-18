@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/codegangsta/martini"
+	"github.com/go-martini/martini"
 	"github.com/martini-contrib/sessions"
 	"encoding/hex"
 	"labix.org/v2/mgo/bson"
