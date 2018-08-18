@@ -1,14 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"time"
+
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/sessions"
 	"labix.org/v2/mgo/bson"
-	"encoding/json"
-	"time"
-	"fmt"
-	"log"
 )
 
 func (s *AEServer) SetupRouting() {
@@ -29,7 +30,7 @@ func (s *AEServer) SetupRouting() {
 	s.m.Post("/me", s.HandleMe)
 }
 
-func (s *AEServer) HandlePostQuestion(w http.ResponseWriter, r *http.Request, session sessions.Session) (int,string) {
+func (s *AEServer) HandlePostQuestion(w http.ResponseWriter, r *http.Request, session sessions.Session) (int, string) {
 	//Verify user account or something
 	login := session.Get("Login")
 	if login == nil {
@@ -58,20 +59,20 @@ func (s *AEServer) HandlePostQuestion(w http.ResponseWriter, r *http.Request, se
 	return 200, q.GetIdHex()
 }
 
-func (s *AEServer) HandleGetQuestions()(int,string) {
+func (s *AEServer) HandleGetQuestions() (int, string) {
 	q := s.questions.FindWhere(bson.M{})
 	if q == nil {
-		return 404,Message("Question not found.")
+		return 404, Message("Question not found.")
 	}
 	return 200, Stringify(q)
 }
-func (s *AEServer) HandleGetQuestion(params martini.Params) (int,string) {
+func (s *AEServer) HandleGetQuestion(params martini.Params) (int, string) {
 	id := params["id"]
 	hid := bson.ObjectIdHex(id)
 	fmt.Println(hid)
-	q,ok := s.questions.FindByID(hid).(*Question)
+	q, ok := s.questions.FindByID(hid).(*Question)
 	if !ok || q == nil {
-		return 404,""
+		return 404, ""
 	}
 	return 200, Stringify(q)
 }
@@ -88,7 +89,7 @@ func (s *AEServer) HandleGetSalt(r *http.Request) (int, string) {
 	}
 	salt := genRandString()
 	s.salts[a.Username] = salt
-	return 200,salt
+	return 200, salt
 }
 
 func (s *AEServer) HandleUniqueSalt(r *http.Request) (int, string) {
@@ -112,7 +113,7 @@ func (s *AEServer) HandleLogout(session sessions.Session) {
 	session.Delete("Login")
 }
 
-func (s *AEServer) HandleLogin(r *http.Request, params martini.Params, session sessions.Session) (int,string) {
+func (s *AEServer) HandleLogin(r *http.Request, params martini.Params, session sessions.Session) (int, string) {
 	a := AuthFromJson(r.Body)
 	if a == nil {
 		time.Sleep(time.Second)
@@ -122,10 +123,10 @@ func (s *AEServer) HandleLogin(r *http.Request, params martini.Params, session s
 	sltr := StrResponse{}
 	sltr.Arg = a.Username
 	sltr.Resp = make(chan string)
-	s.ch_getsalt <-sltr
+	s.ch_getsalt <- sltr
 	salt := <-sltr.Resp
 	if salt == "" {
-		return 401,Message("No login salt registered!")
+		return 401, Message("No login salt registered!")
 	}
 
 	user := s.FindUserByName(a.Username)
@@ -157,7 +158,7 @@ func (s *AEServer) HandleQuestionComment(sess sessions.Session, params martini.P
 		return http.StatusBadRequest, Message("Poorly formatted JSON")
 	}
 
-	question,ok := s.questions.FindByID(id).(*Question)
+	question, ok := s.questions.FindByID(id).(*Question)
 	if !ok {
 		return http.StatusForbidden, Message("No such question!")
 	}
@@ -200,7 +201,7 @@ func (s *AEServer) HandleQuestionResponse(sess sessions.Session, params martini.
 		return http.StatusBadRequest, Message("Poorly formatted JSON")
 	}
 
-	question,ok := s.questions.FindByID(id).(*Question)
+	question, ok := s.questions.FindByID(id).(*Question)
 	if !ok {
 		return http.StatusForbidden, Message("No such question!")
 	}
@@ -222,7 +223,7 @@ func (s *AEServer) HandleResponseComment(sess sessions.Session, params martini.P
 		return http.StatusBadRequest, Message("Poorly formatted JSON")
 	}
 
-	question,ok := s.questions.FindByID(id).(*Question)
+	question, ok := s.questions.FindByID(id).(*Question)
 	if !ok {
 		return http.StatusForbidden, Message("No such question!")
 	}
@@ -239,10 +240,10 @@ func (s *AEServer) HandleMe(session sessions.Session) (int, string) {
 	return 200, Message("Nothing here")
 }
 
-func (s *AEServer) HandleVote(params martini.Params, session sessions.Session, r *http.Request) (int,string) {
+func (s *AEServer) HandleVote(params martini.Params, session sessions.Session, r *http.Request) (int, string) {
 	opt := params["opt"]
 	if opt != "up" && opt != "down" {
-		return http.StatusMethodNotAllowed,Message("Invalid vote type")
+		return http.StatusMethodNotAllowed, Message("Invalid vote type")
 	}
 	user := s.GetAuthedUser(session)
 	if user == nil {
@@ -250,19 +251,19 @@ func (s *AEServer) HandleVote(params martini.Params, session sessions.Session, r
 	}
 
 	q := bson.ObjectIdHex(params["id"])
-	question,ok := s.questions.FindByID(q).(*Question)
+	question, ok := s.questions.FindByID(q).(*Question)
 	if question == nil || !ok {
 		return 404, Message("No such question!")
 	}
 	switch opt {
-		case "up":
-			if question.Upvote(user.ID) {
-				s.questions.Update(question)
-			}
-		case "down":
-			if question.Downvote(user.ID) {
-				s.questions.Update(question)
-			}
+	case "up":
+		if question.Upvote(user.ID) {
+			s.questions.Update(question)
+		}
+	case "down":
+		if question.Downvote(user.ID) {
+			s.questions.Update(question)
+		}
 	}
 
 	return 200, Stringify(question)
@@ -289,5 +290,5 @@ func (s *AEServer) HandleRegister(r *http.Request) (int, string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	return 200,Message("Success!")
+	return 200, Message("Success!")
 }

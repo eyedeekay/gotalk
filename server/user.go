@@ -1,18 +1,19 @@
 package main
 
 import (
-	"labix.org/v2/mgo/bson"
-	"time"
 	"encoding/json"
 	"io"
+	"time"
+
+	"labix.org/v2/mgo/bson"
 )
 
 type User struct {
-	ID bson.ObjectId "_id,omitempty"
+	ID       bson.ObjectId "_id,omitempty"
 	Username string
 	Password string `json:"-"`
-	Salt string `json:"-"`
-	login time.Time
+	Salt     string `json:"-"`
+	login    time.Time
 }
 
 func (u *User) New() I {
@@ -26,7 +27,7 @@ func (u *User) GetID() bson.ObjectId {
 type AuthAttempt struct {
 	Username string
 	Password string
-	Salt string
+	Salt     string
 }
 
 func AuthFromJson(r io.Reader) *AuthAttempt {

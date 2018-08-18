@@ -1,30 +1,31 @@
 package main
 
 import (
-	"fmt"
-	"github.com/go-martini/martini"
-	"github.com/martini-contrib/sessions"
-	"encoding/hex"
-	"labix.org/v2/mgo/bson"
-	"crypto/sha256"
-	"log"
-	"crypto/rand"
 	"bytes"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/sessions"
+	"labix.org/v2/mgo/bson"
 )
 
 type AEServer struct {
-	db *Database
+	db        *Database
 	questions *Collection
-	users *Collection
+	users     *Collection
 
-	tokens map[string]*User
-	ch_login chan *Session
+	tokens    map[string]*User
+	ch_login  chan *Session
 	ch_logout chan string
-	ch_getu chan *AuthReq
+	ch_getu   chan *AuthReq
 
-	salts map[string]string
+	salts      map[string]string
 	ch_newsalt chan KVPair
 	ch_delsalt chan string
 	ch_getsalt chan StrResponse
@@ -37,18 +38,18 @@ type KVPair struct {
 }
 
 type StrResponse struct {
-	Arg string
+	Arg  string
 	Resp chan string
 }
 
 type Session struct {
 	Token string
-	Who *User
+	Who   *User
 }
 
 type AuthReq struct {
 	Token string
-	Ret chan *User
+	Ret   chan *User
 }
 
 func NewServer() *AEServer {
@@ -77,7 +78,7 @@ func NewServer() *AEServer {
 
 func (s *AEServer) Init(secretfile string) {
 	//Setup cookie store for sessions
-	secret,err := ioutil.ReadFile(secretfile)
+	secret, err := ioutil.ReadFile(secretfile)
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +110,7 @@ func (s *AEServer) GetSessionToken() string {
 }
 
 func (s *AEServer) FindUserByName(name string) *User {
-	users := s.users.FindWhere(bson.M{"username":name})
+	users := s.users.FindWhere(bson.M{"username": name})
 	if len(users) == 0 {
 		fmt.Println("User not found.")
 		return nil
@@ -149,7 +150,7 @@ func (s *AEServer) SyncSessionRoutine() {
 		case ses := <-s.ch_login:
 			s.tokens[ses.Token] = ses.Who
 		case log := <-s.ch_logout:
-			if _,ok := s.tokens[log]; ok {
+			if _, ok := s.tokens[log]; ok {
 				delete(s.tokens, log)
 			}
 		case get := <-s.ch_getu:
@@ -167,7 +168,7 @@ func (s *AEServer) SyncSaltRoutine() {
 	for {
 		select {
 		case gr := <-s.ch_getsalt:
-			slt,ok := s.salts[gr.Arg]
+			slt, ok := s.salts[gr.Arg]
 			if !ok {
 				gr.Resp <- ""
 			} else {
@@ -182,7 +183,7 @@ func (s *AEServer) SyncSaltRoutine() {
 }
 
 func Message(s string) string {
-	return Stringify(JM{"Message" : s})
+	return Stringify(JM{"Message": s})
 }
 
 func DoHash(pass, salt string) string {

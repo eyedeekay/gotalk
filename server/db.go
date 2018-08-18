@@ -1,22 +1,23 @@
 package main
 
 import (
+	"errors"
+	"log"
+
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
-	"log"
-	"errors"
 )
 
 var ErrorNotFound = errors.New("No documents found!")
 var ErrorNullResponse = errors.New("Got back null response from mgo.")
 
 type Database struct {
-	db *mgo.Database
+	db          *mgo.Database
 	collections map[string]*Collection
 }
 
 func NewDatabase(host string) *Database {
-	s,err := mgo.Dial(host)
+	s, err := mgo.Dial(host)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +30,7 @@ func NewDatabase(host string) *Database {
 }
 
 func (db *Database) Collection(name string, typ I) *Collection {
-	c,ok := db.collections[name]
+	c, ok := db.collections[name]
 	if ok {
 		return c
 	}
@@ -46,8 +47,8 @@ type I interface {
 }
 
 type Collection struct {
-	col *mgo.Collection
-	cache map[string]I
+	col      *mgo.Collection
+	cache    map[string]I
 	template I
 }
 
@@ -70,7 +71,7 @@ func (c *Collection) FindByID(ID bson.ObjectId) I {
 		log.Println(ErrorNullResponse)
 		return nil
 	}
-	cnt,err := q.Count()
+	cnt, err := q.Count()
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -92,7 +93,7 @@ func (c *Collection) FindWhere(match bson.M) []I {
 		return nil
 	}
 
-	n,err := q.Count()
+	n, err := q.Count()
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -106,7 +107,7 @@ func (c *Collection) FindWhere(match bson.M) []I {
 	i := q.Iter()
 	v := c.template.New()
 	for i.Next(v) {
-		out = append(out,v)
+		out = append(out, v)
 		v = c.template.New()
 	}
 	return out
