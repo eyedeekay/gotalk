@@ -1,0 +1,15 @@
+[[constraint]]
+  name = "github.com/martini-contrib/sessions"
+  branch = "master"
+
+[[constraint]]
+  name = "labix.org/v2/mgo"
+
+[[constraint]]
+  name = "github.com/go-martini/martini"
+  branch = "master"
+
+[prune]
+  go-tests = true
+  unused-packages = true
+  non-go = true
