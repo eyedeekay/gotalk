@@ -16,3 +16,13 @@ format:
 clean:
 	rm -rf $(BIN)
 	mkdir -p $(BIN)
+
+deps:
+	go get -u golang.org/x/tools/cmd/goimports
+	go get ./...
+
+docker:
+	docker build -t eyedeekay/gotalk .
+
+run:
+	docker run -i -t eyedeekay/gotalk
